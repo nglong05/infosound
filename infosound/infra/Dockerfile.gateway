@@ -1,0 +1,4 @@
+ARG NGINX_IMAGE
+FROM ${NGINX_IMAGE}
+# Keep the pinned Nginx release; apply available security updates to its OS libs.
+RUN apk upgrade --no-cache brotli-libs c-ares curl libcrypto3 libcurl libexpat libssl3 libuuid libxml2 pcre2 tiff

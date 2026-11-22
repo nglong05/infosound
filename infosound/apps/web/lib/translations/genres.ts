@@ -1,0 +1,21 @@
+export const genresEnglish:Readonly<Record<string,string>>={
+ 'Chọn thể loại':'Choose genres',
+ 'Tìm thể loại…':'Search genres…',
+ 'Có thể chọn tối đa {count} thể loại.':'Choose up to {count} genres.',
+ 'Đã chọn {count}/{max} thể loại.':'{count}/{max} genres selected.',
+ 'Bỏ thể loại {name}':'Remove genre {name}',
+ 'Thể loại đã chọn':'Selected genres',
+ 'Danh sách thể loại':'Genre list',
+ 'Đang tải thể loại…':'Loading genres…',
+ 'Không thể tải danh sách thể loại.':'Unable to load the genre list.',
+ 'Chưa có thể loại để chọn.':'No genres are available yet.',
+ 'Không tìm thấy thể loại phù hợp.':'No matching genres found.',
+ 'Đã chọn đủ {count} thể loại. Bỏ một thể loại để chọn thêm.':'You have selected {count} genres. Remove one to add another.',
+ 'Đóng danh sách thể loại':'Close genre list',
+ 'Nhấn Enter để chọn hoặc bỏ chọn thể loại.':'Press Enter to select or deselect a genre.',
+ 'Một số thể loại không còn khả dụng. Hãy chọn lại.':'Some genres are no longer available. Please choose again.',
+ 'Chọn tối đa 8 thể loại.':'Choose up to 8 genres.',
+ 'Thể loại không hợp lệ.':'Invalid genre.',
+ 'Mỗi thể loại chỉ được chọn một lần.':'Each genre can only be selected once.',
+ 'Chỉ gửi danh sách thể loại hoặc trường thể loại cũ.':'Send either the genre list or the legacy genre field.'
+};

@@ -1,0 +1,27 @@
+/* Shared navigation CTAs only. Media, mutations and structural menus keep their styles. */
+.navigation-action{
+ display:inline-flex;align-items:center;justify-content:center;gap:9px;
+ min-width:44px;min-height:44px;max-width:100%;padding:0;
+ border:0;border-radius:0;background:transparent;box-shadow:none;
+ color:var(--link);font-size:14px;font-weight:550;line-height:1.5;letter-spacing:normal;text-transform:none;
+ text-align:start;text-decoration:none;white-space:normal;vertical-align:middle;
+ cursor:pointer;touch-action:manipulation;transition:color var(--motion-fast);
+}
+.navigation-action-label{min-width:0;overflow-wrap:anywhere}
+.navigation-action-arrow{display:inline-flex;align-items:center;justify-content:center;flex:0 0 18px;width:18px;height:18px}
+.navigation-action[data-direction="previous"] .navigation-action-arrow{order:-1;transform:rotate(180deg)}
+html[dir="rtl"] .navigation-action-arrow{transform:rotate(180deg)}
+html[dir="rtl"] .navigation-action[data-direction="previous"] .navigation-action-arrow{transform:none}
+.navigation-action:hover:not(:disabled){background:transparent;border:0;box-shadow:none;color:var(--link-hover);text-decoration:none}
+.navigation-action:hover:not(:disabled) .navigation-action-label{text-decoration:underline;text-underline-offset:3px}
+.navigation-action:focus-visible{outline:2px solid var(--focus);outline-offset:4px;border-radius:3px}
+.navigation-action:disabled{opacity:.45;cursor:default}
+.topbar .navigation-action,.auth-method-switch.navigation-action{font-size:14px;min-height:44px}
+.topbar .navigation-action:is([href="/login"],[href="/register"])>.navigation-action-arrow{display:none}
+.auth-switch .navigation-action{color:var(--link)}
+.auth-switch .navigation-action:hover{color:var(--link-hover)}
+@media(max-width:767px){
+ .page-heading>.navigation-action{margin-top:16px}
+ .intro-copy .navigation-action{max-width:calc(100% - 84px);text-align:start}
+}
+@media(prefers-reduced-motion:reduce){.navigation-action{transition:none}}

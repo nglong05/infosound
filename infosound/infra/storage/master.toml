@@ -1,0 +1,11 @@
+# Small single-node lab: allocate one volume per collection instead of seven.
+# No preallocation; each volume grows only as data is written.
+[master.volume_growth]
+copy_1 = 1
+copy_2 = 1
+copy_3 = 1
+copy_other = 1
+threshold = 0.9
+
+[master.vacuum]
+max_parallel_per_server = 1

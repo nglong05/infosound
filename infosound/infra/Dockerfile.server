@@ -1,0 +1,53 @@
+ARG NODE_IMAGE
+FROM ${NODE_IMAGE} AS build
+RUN apt-get update && apt-get install -y --no-install-recommends gcc libc6-dev ffmpeg python3 openssl && rm -rf /var/lib/apt/lists/*
+WORKDIR /repo/infosound
+RUN ln -s /repo/infosound /workspace
+ENV PNPM_HOME=/pnpm PATH=/pnpm:$PATH NODE_OPTIONS=--max-old-space-size=2048
+RUN npm install --global pnpm@10.34.9
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml tsconfig.base.json ./
+COPY packages/database/package.json ./packages/database/package.json
+COPY packages/contracts/package.json ./packages/contracts/package.json
+COPY packages/storage/package.json ./packages/storage/package.json
+COPY apps/api/package.json ./apps/api/package.json
+COPY apps/audio-worker/package.json ./apps/audio-worker/package.json
+COPY apps/background-worker/package.json ./apps/background-worker/package.json
+COPY --from=comment_moderation package.json /repo/comment-moderation/package.json
+RUN --mount=type=cache,id=infosound-pnpm,target=/pnpm/store pnpm config set store-dir /pnpm/store && pnpm install --frozen-lockfile
+COPY packages ./packages
+COPY apps/api ./apps/api
+COPY apps/audio-worker ./apps/audio-worker
+COPY apps/background-worker ./apps/background-worker
+COPY --from=comment_moderation . /repo/comment-moderation
+COPY scripts/bootstrap-host.sh scripts/preflight.sh scripts/doctor.sh scripts/compose.sh scripts/init-data.mjs scripts/init-secrets.py scripts/local_origin.py scripts/render-config.py scripts/build.sh scripts/up.sh scripts/resume.sh scripts/lock.sh scripts/storage-bootstrap.ts scripts/safe-logs.py scripts/backup.sh scripts/backup-manifest.sql scripts/restore-test.sh scripts/verify-restore.mjs ./scripts/
+COPY infra/audio-parser ./infra/audio-parser
+COPY infra/image-parser ./infra/image-parser
+RUN cc -O2 -Wall -Wextra -Werror -o /usr/local/bin/infosound-parser infra/audio-parser/landlock.c
+RUN cc -O2 -Wall -Wextra -Werror -o /usr/local/bin/infosound-image-parser infra/image-parser/landlock.c
+RUN pnpm --filter @infosound/database generate
+RUN pnpm --filter @infosound/contracts build && pnpm --filter @infosound/database build && pnpm --filter @infosound/storage build
+RUN pnpm --filter @infosound/comment-moderation build
+RUN pnpm --filter @infosound/api build && pnpm --filter @infosound/audio-worker build && pnpm --filter @infosound/background-worker build
+
+FROM build AS package
+ARG APP=api
+RUN --mount=type=cache,id=infosound-pnpm,target=/pnpm/store pnpm --filter @infosound/${APP} --prod deploy --offline --frozen-lockfile /output
+
+FROM ${NODE_IMAGE} AS runtime
+ARG APP=api
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && if [ "$APP" = audio-worker ]; then apt-get install -y --no-install-recommends ffmpeg; fi && rm -rf /var/lib/apt/lists/*
+RUN rm -rf /usr/local/lib/node_modules/npm && rm -f /usr/local/bin/npm /usr/local/bin/npx
+ENV NODE_ENV=production NODE_OPTIONS=--max-old-space-size=512
+WORKDIR /app
+COPY --from=package --chown=node:node /output ./
+COPY --from=build /usr/local/bin/infosound-parser /usr/local/bin/infosound-parser
+COPY --from=build /usr/local/bin/infosound-image-parser /usr/local/bin/infosound-image-parser
+USER node
+CMD ["node", "dist/main.js"]
+
+FROM build AS tools
+COPY apps/web/package.json ./apps/web/package.json
+RUN --mount=type=cache,id=infosound-pnpm,target=/pnpm/store pnpm install --frozen-lockfile --filter @infosound/web
+COPY apps/web ./apps/web
+USER node
+CMD ["pnpm", "typecheck"]

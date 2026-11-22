@@ -1,0 +1,493 @@
+generator client {
+  provider = "prisma-client-js"
+  output = "../generated/client"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+enum Role {
+  USER
+  AUTHOR
+}
+enum ProcessingState {
+  DRAFT
+  QUEUED
+  PROCESSING
+  READY
+  FAILED
+}
+enum PublicationState {
+  UNPUBLISHED
+  PUBLISHED
+}
+enum TaskStatus {
+  QUEUED
+  PROCESSING
+  SUCCEEDED
+  FAILED
+}
+enum AssetKind {
+  ORIGINAL
+  PLAYBACK
+  ARTWORK
+}
+model PendingRegistration {
+  id String @id @default(uuid()) @db.Uuid
+  email String @unique
+  displayName String @map("display_name")
+  role Role
+  tokenHash String @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  consumedAt DateTime? @map("consumed_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  @@map("pending_registrations")
+}
+model User {
+  id String @id @default(uuid()) @db.Uuid
+  email String? @unique
+  username String? @unique @db.VarChar(30)
+  passwordHash String? @map("password_hash")
+  displayName String @map("display_name")
+  bio String @default("")
+  avatarKey String? @map("avatar_key")
+  avatarVersionId String? @map("avatar_version_id")
+  avatarChecksum String? @map("avatar_checksum") @db.VarChar(64)
+  avatarSize BigInt? @map("avatar_size")
+  avatarRevision Int @default(0) @map("avatar_revision")
+  imageUploadWindowAt DateTime? @map("image_upload_window_at") @db.Timestamptz
+  imageUploadWindowBytes BigInt @default(0) @map("image_upload_window_bytes")
+  imageUploadWindowCount Int @default(0) @map("image_upload_window_count")
+  role Role
+  active Boolean @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  sessions AuthSession[]
+  externalIdentities ExternalIdentity[]
+  resets PasswordResetRequest[]
+  tracks Track[]
+  uploads UploadSession[]
+  avatarUploads AvatarUpload[]
+  likes TrackLike[]
+  listens TrackListen[]
+  musicPreference MusicPreference?
+  comments TrackComment[]
+  commentLikes TrackCommentLike[]
+  following ArtistFollow[] @relation("follower")
+  followers ArtistFollow[] @relation("author")
+  playlists Playlist[]
+  notifications Notification[]
+  chatConversations ChatConversation[]
+  @@map("users")
+}
+model MusicPreference {
+  userId String @id @map("user_id") @db.Uuid
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  genreIds String[] @default([]) @map("genre_ids")
+  artistIds String[] @default([]) @map("artist_ids") @db.Uuid
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  @@map("music_preferences")
+}
+model AvatarUpload {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  objectKey String @unique @map("object_key")
+  declaredSize BigInt @map("declared_size")
+  contentType String @map("content_type")
+  filename String @db.VarChar(200)
+  idempotencyKey String @map("idempotency_key") @db.VarChar(128)
+  payloadHash String @map("payload_hash") @db.VarChar(64)
+  revision Int
+  completedAt DateTime? @map("completed_at") @db.Timestamptz
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@unique([userId,idempotencyKey])
+  @@index([expiresAt,completedAt])
+  @@map("avatar_uploads")
+}
+model ExternalIdentity {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  provider String @db.VarChar(16)
+  subject String @db.VarChar(512)
+  providerEmail String? @map("provider_email") @db.VarChar(254)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  @@unique([provider,subject])
+  @@index([userId])
+  @@map("external_identities")
+}
+model OAuthFlow {
+  id String @id @default(uuid()) @db.Uuid
+  provider String @db.VarChar(16)
+  role Role @default(USER)
+  stateHash String @unique @map("state_hash") @db.VarChar(64)
+  bindingHash String @map("binding_hash") @db.VarChar(64)
+  nonceHash String? @map("nonce_hash") @db.VarChar(64)
+  codeVerifier String? @map("code_verifier") @db.VarChar(128)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@index([expiresAt])
+  @@map("oauth_flows")
+}
+model EmailOtpChallenge {
+  id String @id @default(uuid()) @db.Uuid
+  requestHash String @unique @map("request_hash") @db.VarChar(64)
+  email String @db.VarChar(254)
+  username String? @db.VarChar(30)
+  passwordHash String? @map("password_hash")
+  codeHash String @map("code_hash") @db.VarChar(64)
+  displayName String @map("display_name") @db.VarChar(80)
+  role Role @default(USER)
+  attempts Int @default(0)
+  lastSentAt DateTime @default(now()) @map("last_sent_at") @db.Timestamptz
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  consumedAt DateTime? @map("consumed_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@index([email,createdAt])
+  @@index([expiresAt])
+  @@map("email_otp_challenges")
+}
+model AuthSession {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  refreshHash String @unique @map("refresh_hash")
+  previousHash String? @map("previous_hash")
+  rotatedAt DateTime? @map("rotated_at") @db.Timestamptz
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@index([userId])
+  @@map("auth_sessions")
+}
+model PasswordResetRequest {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  tokenHash String @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  consumedAt DateTime? @map("consumed_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@index([userId])
+  @@map("password_reset_requests")
+}
+model Track {
+  id String @id @default(uuid()) @db.Uuid
+  authorId String @map("author_id") @db.Uuid
+  author User @relation(fields:[authorId],references:[id])
+  title String
+  description String @default("")
+  genre String @default("")
+  downloadEnabled Boolean @default(false) @map("download_enabled")
+  processingState ProcessingState @default(DRAFT) @map("processing_state")
+  publicationState PublicationState @default(UNPUBLISHED) @map("publication_state")
+  sourceVersion Int @default(1) @map("source_version")
+  pipelineVersion Int @default(1) @map("pipeline_version")
+  duration Float?
+  playCount Int @default(0) @map("play_count")
+  sampleRate Int? @map("sample_rate")
+  bitDepth Int? @map("bit_depth")
+  channels Int?
+  sourceCodec String? @map("source_codec")
+  outputCodec String? @map("output_codec")
+  lossyTranscode Boolean @default(false) @map("lossy_transcode")
+  provenance String @default("USER_PROVIDED")
+  playbackAssetId String? @map("playback_asset_id") @db.Uuid
+  artworkAssetId String? @map("artwork_asset_id") @db.Uuid
+  publishedAt DateTime? @map("published_at") @db.Timestamptz
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  uploads UploadSession[]
+  assets TrackAsset[]
+  tasks ProcessingTask[]
+  likes TrackLike[]
+  playlistTracks PlaylistTrack[]
+  release ReleaseEvent?
+  genres TrackGenre[]
+  lyrics TrackLyrics?
+  listens TrackListen[]
+  comments TrackComment[]
+  visitorListens VisitorTrackListen[]
+  waveform TrackWaveform?
+  @@index([publicationState,processingState,createdAt,id])
+  @@index([publicationState,processingState,playCount(sort:Desc),publishedAt(sort:Desc),id],map:"tracks_popular_idx")
+  @@index([authorId,deletedAt])
+  @@map("tracks")
+}
+model VisitorTrackListen {
+  visitorHash String @map("visitor_hash") @db.Char(64)
+  trackId String @map("track_id") @db.Uuid
+  track Track @relation(fields:[trackId],references:[id],onDelete:Cascade)
+  sourceVersion Int @map("source_version")
+  lastCountedAt DateTime @map("last_counted_at") @db.Timestamptz
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  @@id([visitorHash,trackId])
+  @@index([expiresAt],map:"visitor_track_listens_expiry_idx")
+  @@map("visitor_track_listens")
+}
+model TrackListen {
+  userId String @map("user_id") @db.Uuid
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  trackId String @map("track_id") @db.Uuid
+  track Track @relation(fields:[trackId],references:[id],onDelete:Cascade)
+  sourceVersion Int @map("source_version")
+  lastCountedAt DateTime @map("last_counted_at") @db.Timestamptz
+  lastListenedAt DateTime @default(now()) @map("last_listened_at") @db.Timestamptz
+  qualifiedPlays Int @default(1) @map("qualified_plays")
+  @@id([userId,trackId])
+  @@index([userId,lastListenedAt(sort:Desc),trackId],map:"track_listens_history_idx")
+  @@index([trackId,qualifiedPlays(sort:Desc),lastCountedAt(sort:Desc),userId],map:"track_listens_fans_idx")
+  @@map("track_listens")
+}
+model TrackComment {
+  id String @id @default(uuid()) @db.Uuid
+  trackId String @map("track_id") @db.Uuid
+  track Track @relation(fields:[trackId],references:[id],onDelete:Cascade)
+  userId String @map("user_id") @db.Uuid
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  sourceVersion Int @map("source_version")
+  body String @db.VarChar(2000)
+  atSeconds Float @map("at_seconds")
+  parentId String? @map("parent_id") @db.Uuid
+  parent TrackComment? @relation("CommentReplies",fields:[parentId],references:[id],onDelete:Cascade)
+  replies TrackComment[] @relation("CommentReplies")
+  likes TrackCommentLike[]
+  moderationStatus String @default("PENDING") @map("moderation_status")
+  contentVersion Int @default(1) @map("content_version")
+  moderationRevision Int @default(1) @map("moderation_revision")
+  decisionSource String @default("SYSTEM") @map("decision_source")
+  decisionAt DateTime? @map("decision_at") @db.Timestamptz
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz
+  moderationUpdatedAt DateTime @default(now()) @map("moderation_updated_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@index([trackId,sourceVersion,parentId,createdAt(sort:Desc),id],map:"track_comments_page_idx")
+  @@index([trackId,sourceVersion,atSeconds,id],map:"track_comments_markers_idx")
+  @@map("track_comments")
+}
+model TrackCommentLike {
+  userId String @map("user_id") @db.Uuid
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  commentId String @map("comment_id") @db.Uuid
+  comment TrackComment @relation(fields:[commentId],references:[id],onDelete:Cascade)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@id([userId,commentId])
+  @@index([commentId],map:"track_comment_likes_target_idx")
+  @@map("track_comment_likes")
+}
+model TrackWaveform {
+  trackId String @id @map("track_id") @db.Uuid
+  track Track @relation(fields:[trackId],references:[id],onDelete:Cascade)
+  sourceVersion Int @map("source_version")
+  pipelineVersion Int @map("pipeline_version")
+  playbackAssetId String @map("playback_asset_id") @db.Uuid
+  status TaskStatus @default(QUEUED)
+  duration Float?
+  peaks Json?
+  runToken String? @map("run_token") @db.Uuid
+  leaseExpiresAt DateTime? @map("lease_expires_at") @db.Timestamptz
+  attempts Int @default(0)
+  errorCode String? @map("error_code")
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  @@index([status,nextAttemptAt,leaseExpiresAt],map:"track_waveforms_reconcile_idx")
+  @@map("track_waveforms")
+}
+model TrackLyrics {
+  trackId String @id @map("track_id") @db.Uuid
+  track Track @relation(fields:[trackId],references:[id],onDelete:Cascade)
+  sourceVersion Int @map("source_version")
+  lines Json
+  // PostgreSQL stored generated column + GIN are managed by SQL migration.
+  searchText String @default(dbgenerated()) @map("search_text") @db.Text @ignore
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz
+  @@map("track_lyrics")
+}
+model Genre {
+  id String @id
+  name String
+  aliases String[] @default([])
+  isSelectable Boolean @default(true) @map("is_selectable")
+  sortOrder Int @default(0) @map("sort_order")
+  tracks TrackGenre[]
+  @@map("genres")
+}
+model TrackGenre {
+  trackId String @map("track_id") @db.Uuid
+  genreId String @map("genre_id")
+  position Int
+  track Track @relation(fields:[trackId],references:[id],onDelete:Cascade)
+  genre Genre @relation(fields:[genreId],references:[id],onDelete:Restrict)
+  @@id([trackId,genreId])
+  @@unique([trackId,position])
+  @@index([genreId,trackId])
+  @@map("track_genres")
+}
+model UploadSession {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  user User @relation(fields:[userId],references:[id])
+  trackId String @map("track_id") @db.Uuid
+  track Track @relation(fields:[trackId],references:[id])
+  sourceVersion Int @map("source_version")
+  kind AssetKind @default(ORIGINAL)
+  objectKey String @unique @map("object_key")
+  bucket String @default("uploads-quarantine")
+  declaredSize BigInt @map("declared_size")
+  contentType String @map("content_type")
+  filename String
+  idempotencyKey String @map("idempotency_key")
+  payloadHash String @map("payload_hash")
+  taskId String? @map("task_id") @db.Uuid
+  completedAt DateTime? @map("completed_at") @db.Timestamptz
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@unique([userId,idempotencyKey])
+  @@index([expiresAt,completedAt])
+  @@map("upload_sessions")
+}
+model TrackAsset {
+  id String @id @default(uuid()) @db.Uuid
+  trackId String @map("track_id") @db.Uuid
+  track Track @relation(fields:[trackId],references:[id])
+  sourceVersion Int @map("source_version")
+  pipelineVersion Int @map("pipeline_version")
+  kind AssetKind
+  bucket String
+  key String
+  versionId String? @map("version_id")
+  checksum String?
+  size BigInt
+  contentType String @map("content_type")
+  runToken String? @map("run_token") @db.Uuid
+  verified Boolean @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@unique([trackId,sourceVersion,pipelineVersion,kind])
+  @@map("track_assets")
+}
+model ProcessingTask {
+  id String @id @default(uuid()) @db.Uuid
+  trackId String @map("track_id") @db.Uuid
+  track Track @relation(fields:[trackId],references:[id])
+  sourceVersion Int @map("source_version")
+  pipelineVersion Int @map("pipeline_version")
+  status TaskStatus @default(QUEUED)
+  sourceBucket String @map("source_bucket")
+  sourceKey String @map("source_key")
+  sourceVersionId String? @map("source_version_id")
+  runToken String? @map("run_token") @db.Uuid
+  leaseExpiresAt DateTime? @map("lease_expires_at") @db.Timestamptz
+  attempts Int @default(0)
+  errorCode String? @map("error_code")
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  @@unique([trackId,sourceVersion,pipelineVersion])
+  @@index([status,leaseExpiresAt])
+  @@map("processing_tasks")
+}
+model OutboxEvent {
+  id String @id @default(uuid()) @db.Uuid
+  type String
+  payload Json
+  runToken String? @map("run_token") @db.Uuid
+  leaseExpiresAt DateTime? @map("lease_expires_at") @db.Timestamptz
+  availableAt DateTime @default(now()) @map("available_at") @db.Timestamptz
+  attempts Int @default(0)
+  deliveredAt DateTime? @map("delivered_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@index([deliveredAt,availableAt])
+  @@map("outbox_events")
+}
+model TrackLike {
+  userId String @map("user_id") @db.Uuid
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  trackId String @map("track_id") @db.Uuid
+  track Track @relation(fields:[trackId],references:[id])
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@id([userId,trackId])
+  @@index([trackId])
+  @@map("track_likes")
+}
+model ArtistFollow {
+  userId String @map("user_id") @db.Uuid
+  user User @relation("follower",fields:[userId],references:[id],onDelete:Cascade)
+  authorId String @map("author_id") @db.Uuid
+  author User @relation("author",fields:[authorId],references:[id],onDelete:Cascade)
+  notifyNewReleases Boolean @default(false) @map("notify_new_releases")
+  subscribedAt DateTime? @map("subscribed_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@id([userId,authorId])
+  @@index([authorId,notifyNewReleases])
+  @@map("artist_follows")
+}
+model Playlist {
+  id String @id @default(uuid()) @db.Uuid
+  ownerId String @map("owner_id") @db.Uuid
+  owner User @relation(fields:[ownerId],references:[id],onDelete:Cascade)
+  title String
+  description String @default("")
+  isPublic Boolean @default(false) @map("is_public")
+  version Int @default(1)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  tracks PlaylistTrack[]
+  @@index([ownerId])
+  @@map("playlists")
+}
+model PlaylistTrack {
+  playlistId String @map("playlist_id") @db.Uuid
+  playlist Playlist @relation(fields:[playlistId],references:[id],onDelete:Cascade)
+  trackId String @map("track_id") @db.Uuid
+  track Track @relation(fields:[trackId],references:[id])
+  position Int
+  @@id([playlistId,trackId])
+  @@index([playlistId,position])
+  @@map("playlist_tracks")
+}
+model ReleaseEvent {
+  id String @id @default(uuid()) @db.Uuid
+  trackId String @unique @map("track_id") @db.Uuid
+  track Track @relation(fields:[trackId],references:[id])
+  authorId String @map("author_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  notifications Notification[]
+  @@map("release_events")
+}
+model Notification {
+  id String @id @default(uuid()) @db.Uuid
+  recipientId String @map("recipient_id") @db.Uuid
+  recipient User @relation(fields:[recipientId],references:[id],onDelete:Cascade)
+  releaseEventId String @map("release_event_id") @db.Uuid
+  releaseEvent ReleaseEvent @relation(fields:[releaseEventId],references:[id])
+  readAt DateTime? @map("read_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  @@unique([recipientId,releaseEventId])
+  @@index([recipientId,createdAt])
+  @@map("notifications")
+}
+model ChatConversation {
+  id        String        @id @default(uuid()) @db.Uuid
+  userId    String        @map("user_id") @db.Uuid
+  user      User          @relation(fields:[userId],references:[id],onDelete:Cascade)
+  title     String        @default("")
+  createdAt DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+  messages  ChatMessage[]
+  @@index([userId,updatedAt(sort:Desc)])
+  @@map("chat_conversations")
+}
+model ChatMessage {
+  id             String           @id @default(uuid()) @db.Uuid
+  conversationId String           @map("conversation_id") @db.Uuid
+  conversation   ChatConversation @relation(fields:[conversationId],references:[id],onDelete:Cascade)
+  role           String           @db.VarChar(16)
+  content        String           @db.Text
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  @@index([conversationId,createdAt])
+  @@map("chat_messages")
+}

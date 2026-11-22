@@ -1,0 +1,12 @@
+{
+  "name": "infosound",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.34.9",
+  "engines": { "node": ">=24 <25" },
+  "scripts": {
+    "typecheck": "pnpm -r typecheck",
+    "build": "pnpm -r --workspace-concurrency=1 build"
+  },
+  "devDependencies": { "typescript": "5.9.3", "@types/node": "24.19.2" }
+}

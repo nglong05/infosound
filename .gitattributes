@@ -1,0 +1,4 @@
+/.runtime-private/localhost-migration/** -text
+/.runtime-private/localhost-migration/snapshot-20261103T092753Z-26e9386d/images.tar.gz filter=lfs diff=lfs merge=lfs -text
+/.runtime-private/localhost-migration/snapshot-20261103T092753Z-26e9386d/storage-data.tar.gz filter=lfs diff=lfs merge=lfs -text
+.runtime-private/localhost-migration/snapshot-latest/*.age filter=lfs diff=lfs merge=lfs -text

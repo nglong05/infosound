@@ -1,0 +1,5 @@
+ARG POSTGRES_IMAGE
+FROM ${POSTGRES_IMAGE}
+# Compose runs PostgreSQL directly as UID999, so the root-to-user helper is unused.
+RUN rm -f /usr/local/bin/gosu
+USER 999:999

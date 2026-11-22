@@ -1,0 +1,161 @@
+/* Presentation only; palettes, media geometry and interactions stay authoritative. */
+:root{--radius-card:24px;--radius-control:14px;--shadow-card:0 4px 20px color-mix(in srgb,var(--bg) 36%,transparent);--shadow-art:0 8px 22px color-mix(in srgb,var(--bg) 55%,transparent)}
+body{background:var(--bg)}
+h1,h2,h3{font-weight:700;letter-spacing:-.025em;line-height:1.25}
+h1{font-size:clamp(30px,3vw,42px)}
+h2,.section-heading h2{font-size:24px;font-weight:650;letter-spacing:-.02em}
+h3{font-weight:650;letter-spacing:-.01em}
+.button{font-weight:650;letter-spacing:0;box-shadow:none}
+.button:hover:not(:disabled){box-shadow:none}
+.button.secondary{background:transparent}
+.button.secondary:hover:not(:disabled){background:var(--surface-hover)}
+.button.selected{background:var(--accent-soft)}
+.button,.icon-button,.text-action,.track-card,.playlist-card,.artist-card{transition-timing-function:cubic-bezier(.2,.8,.2,1)}
+.surface,.surface.compact{padding:24px;border-radius:var(--radius-card);box-shadow:none}
+.eyebrow{letter-spacing:.1em;font-weight:650}
+.sidebar{border-color:var(--border-soft);border-radius:24px;box-shadow:none;padding-top:24px}
+html[dir=rtl] .sidebar{inset:12px 12px calc(var(--player) + 12px) auto;border:1px solid var(--border-soft)}
+.brand{margin-bottom:28px;font-size:25px}
+.nav-caption{margin-bottom:8px;letter-spacing:.09em}
+.sidebar nav{gap:4px}
+.sidebar nav a,.studio-link{border-radius:14px;font-weight:550}
+.sidebar nav a.active,.studio-link.active{box-shadow:none}
+.sidebar-rule{margin-block:20px}
+.sidebar-bottom{padding-top:18px}
+.topbar{padding-inline:28px;gap:16px;backdrop-filter:none}
+.global-search{min-height:48px;box-shadow:none}
+.global-search input:not([type=range]){min-height:46px}
+.global-search input:not([type=range]):not([type=radio]):not([type=checkbox]),.catalog-search input:not([type=range]):not([type=radio]):not([type=checkbox]){border:0;background:transparent;border-radius:0;box-shadow:none;min-height:50px;padding:12px 14px;font-size:16px;line-height:1.6}
+.catalog-search{width:100%;max-width:none;min-height:48px;gap:0;padding-block:0;padding-inline:8px 20px;margin-bottom:28px;border:1px solid var(--border-soft);border-radius:999px;background:var(--panel);color:var(--muted);box-shadow:none;transition:border-color var(--motion-ui),background var(--motion-ui)}
+.catalog-search:focus-within{border-color:var(--muted);background:var(--elevated)}
+.global-search:focus-within,.catalog-search:focus-within{outline:2px solid var(--focus);outline-offset:3px}
+.global-search input:focus,.global-search input:focus-visible,.catalog-search input:focus,.catalog-search input:focus-visible{outline:none}
+.catalog-search input:not([type=range]):not([type=radio]):not([type=checkbox]){flex:1;min-width:0}
+.catalog-search-submit{display:grid;place-items:center;flex:0 0 44px;width:44px;min-width:44px;height:44px;min-height:44px;padding:0;border:0;border-radius:999px;background:transparent;color:var(--muted);cursor:pointer}
+.catalog-search-submit:hover{color:var(--text);background:var(--surface-hover)}
+.catalog-search-submit svg{width:20px;height:20px;flex-shrink:0}
+.playlist-track-search{margin-block-start:16px}
+.mobile-nav a[aria-current=location]{background:var(--accent-soft);color:var(--accent-hover)}
+.topbar-actions{gap:8px}
+.profile-chip{border-color:var(--border-soft);background:transparent}
+main{padding:24px 28px 40px}
+.page-footer{padding-inline:28px;border-color:var(--border-soft)}
+.page-heading{margin:12px 0 28px;gap:20px;align-items:center}
+.page-heading h1{font-size:clamp(30px,3vw,40px);font-weight:700;line-height:1.25}
+.page-heading p{font-size:15px;line-height:1.7;max-width:64ch}
+.section-heading{margin-bottom:18px;gap:12px;flex-wrap:wrap}
+.section-heading .eyebrow{margin-bottom:6px}
+.catalog-section{margin-bottom:34px}
+.discovery-intro{grid-template-columns:minmax(0,1.25fr) minmax(220px,.75fr);min-height:296px;border-radius:24px;margin-bottom:32px;box-shadow:none;border-color:var(--hero-border)}
+.intro-copy{padding:30px 32px}
+.intro-copy .eyebrow{font-size:11px;letter-spacing:.08em}
+.intro-copy h1{font-size:clamp(32px,3.3vw,44px);line-height:1.15;letter-spacing:-.035em;font-weight:700;max-width:18ch}
+.intro-copy p{font-size:14px;line-height:1.75;margin:16px 0 20px;max-width:48ch}
+.intro-copy .button{min-height:44px;padding:10px 20px;font-weight:650}
+.discovery-intro>.sound-visual{--record-size:176px;min-height:296px;padding:24px;gap:8px;background:transparent}
+.sound-visual .sound-bars{height:24px;flex-basis:24px}
+.sound-visual .visual-caption{font-size:12px}
+.visual-caption strong{font-size:13px;font-weight:600}
+.visual-caption span{font-size:12px}
+.track-grid{gap:18px}
+.track-card{padding:10px;background:transparent;border-color:transparent;border-radius:20px;box-shadow:none}
+.track-card:hover,.track-card:focus-within{background:var(--panel);border-color:transparent;box-shadow:none}
+.card-art{margin-bottom:12px}
+.artwork{border-radius:16px;box-shadow:var(--shadow-art)}
+.track-title{font-weight:600;line-height:1.5;margin-bottom:4px}
+.card-meta{margin-top:10px}
+.card-play{box-shadow:0 4px 12px color-mix(in srgb,var(--bg) 60%,transparent)}
+.card-play:hover{box-shadow:0 4px 16px color-mix(in srgb,var(--bg) 65%,transparent)}
+.track-list{border-radius:20px;box-shadow:none}
+.track-row{min-height:80px;border-color:var(--border-soft)}
+.row-info>a:first-child{font-weight:600}
+.discovery-track-row{min-height:80px;padding:12px 4px;border-radius:12px}
+.discovery-track-row:hover{background:var(--panel)}
+.playlist-card,.artist-card{border-radius:20px;border-color:var(--border-soft);box-shadow:none}
+.playlist-card h2,.artist-card h2{font-weight:650;letter-spacing:-.015em}
+.playlist-art{border-radius:16px;box-shadow:none}
+.trending-artist-card{border-radius:18px;box-shadow:none;background:var(--panel)}
+.trending-artist-name{font-weight:650}
+.artist-hero,.playlist-hero,.detail-hero{border-radius:24px;box-shadow:none}
+.artist-hero{padding:28px;gap:28px}
+.artist-hero h1,.playlist-hero h1,.detail-hero h1{font-size:clamp(30px,3.2vw,42px);font-weight:700;letter-spacing:-.03em;line-height:1.2}
+.sound-track-hero{border-radius:24px;border-color:var(--border-soft);box-shadow:none}
+.sound-track-heading h1{font-weight:700;letter-spacing:-.025em}
+.sound-track-cover .artwork.large{border-radius:16px;border-color:var(--border-soft)}
+.sound-artist-panel{border-radius:20px;border-color:var(--border-soft)}
+.sound-comment-content>p{font-size:15px;line-height:1.7}
+.sound-comment-composer textarea{border-radius:14px}
+.settings-grid{gap:24px}
+.form-stack{gap:20px}
+.form-stack label{font-weight:600}
+.form-stack label small{font-weight:400}
+.auth-card{border-radius:24px;padding:28px;box-shadow:none;border-color:var(--border-soft)}
+.auth-card h2{font-size:26px;font-weight:650;letter-spacing:-.02em}
+.auth-story h1{font-size:clamp(32px,3.5vw,44px);font-weight:700;letter-spacing:-.03em}
+.auth-record{box-shadow:none}
+.state-box{min-height:240px;border-radius:24px;background:var(--panel);box-shadow:none}
+.state-box h2{font-size:22px;font-weight:650}
+.empty-icon{box-shadow:none;border-radius:20px}
+.notification{border-radius:20px;box-shadow:none}
+.notification h2{font-size:20px;font-weight:650}
+.queue-panel,.language-dialog,.theme-dialog,.keyboard-shortcuts-dialog{border-radius:20px}
+.player{box-shadow:0 -4px 20px color-mix(in srgb,var(--bg) 40%,transparent)}
+@media(min-width:1600px){.discovery-intro>.sound-visual{--record-size:192px;min-height:308px}}
+@media(max-width:1023px){
+ .topbar{padding-inline:24px}
+ main{padding:24px}
+ .discovery-intro{grid-template-columns:minmax(0,1.15fr) minmax(190px,.85fr)}
+ .intro-copy{padding:28px}
+ .intro-copy h1{font-size:38px}
+ .discovery-intro>.sound-visual{--record-size:164px;padding:20px;min-height:280px}
+ .mobile-nav{border-color:var(--border-soft);backdrop-filter:none;min-height:52px;padding-block:2px}
+ .mobile-nav a{min-height:44px;font-weight:550}
+}
+@media(max-width:767px){
+ .topbar{padding:10px 16px;gap:6px}
+ .topbar-actions{gap:6px}
+ .mobile-nav{min-height:56px;padding-inline:12px}
+ .mobile-nav a{min-height:48px}
+ main{padding:20px 16px 32px}
+ .page-footer{padding-inline:16px}
+ .page-heading{margin:8px 0 24px}
+ .page-heading h1{font-size:30px}
+ .page-heading p{font-size:15px;margin-top:12px;line-height:1.7}
+ .section-heading{margin-bottom:14px;gap:8px 12px}
+ .section-heading h2{font-size:22px;line-height:1.3}
+ .catalog-section{margin-bottom:28px}
+ .discovery-intro{position:relative;grid-template-columns:minmax(0,1fr);min-height:0;border-radius:22px;margin-bottom:28px}
+ .intro-copy{padding:24px}
+ .intro-copy h1{font-size:clamp(30px,8.5vw,36px);max-width:19ch;margin-top:10px}
+ .intro-copy .eyebrow{font-size:10px}
+ .intro-copy p{font-size:14px;margin:12px 0 24px}
+ .intro-copy .button{max-width:calc(100% - 84px);white-space:normal;text-align:start}
+ .discovery-intro>.sound-visual{--record-size:64px;position:absolute;inset:auto 24px 24px auto;inset-inline:auto 24px;display:flex;width:64px;height:64px;min-height:0;padding:0;gap:0}
+ .sound-visual .vinyl{width:64px;max-width:100%;aspect-ratio:1}
+ .sound-visual .sound-bars,.sound-visual .visual-caption{display:none}
+ .track-grid{gap:10px}
+ .track-card{padding:8px;border-radius:18px}
+ .track-card .artwork{border-radius:14px}
+ .track-title{font-size:14px}
+ .track-list{border-radius:18px}
+ .track-row{padding:12px 10px}
+ .discovery-track-row{padding:12px 0}
+ .playlist-grid,.artist-grid{gap:14px}
+ .playlist-card,.artist-card{border-radius:18px}
+ .artist-hero{padding:24px;gap:20px}
+ .artist-hero h1,.playlist-hero h1,.detail-hero h1{font-size:32px}
+ .surface,.surface.compact{padding:22px 20px;border-radius:22px}
+ .auth-card{padding:24px 22px;border-radius:22px}
+ .auth-story h1{font-size:32px}
+ .state-box{min-height:224px;padding:28px 20px;border-radius:22px}
+ .state-box h2{font-size:21px}
+ .sound-track-hero{border-radius:22px}
+ .sound-track-heading h1{font-size:23px}
+ .keyboard-shortcuts-dialog{border-radius:18px}
+}
+@media(max-height:500px) and (min-width:768px) and (max-width:1023px){
+ .intro-copy{padding:24px}
+ .intro-copy h1{font-size:34px}
+ .discovery-intro>.sound-visual{--record-size:128px;min-height:240px}
+}
+@media(prefers-reduced-motion:reduce){.button,.icon-button,.text-action,.track-card,.playlist-card,.artist-card{transition:none}}

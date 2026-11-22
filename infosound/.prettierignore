@@ -1,0 +1,9 @@
+node_modules/
+**/node_modules/
+**/dist/
+**/.next/
+**/generated/
+apps/web/public/locales/
+apps/web/app/themes.css
+pnpm-lock.yaml
+docs/archive/

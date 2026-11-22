@@ -1,0 +1,19 @@
+{
+  "name": "@infosound/chatbot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI chatbot feature for InfoSound — music Q&A powered by Gemini",
+  "exports": {
+    "./server": { "types": "./src/server/controller.ts", "default": "./src/server/controller.ts" },
+    "./ui": { "types": "./src/ui/index.tsx", "default": "./src/ui/index.tsx" },
+    "./styles.css": "./src/ui/chatbot.css"
+  },
+  "files": ["src"],
+  "scripts": {
+    "test": "node --test tests/",
+    "typecheck": "echo 'Compiled as part of infosound/apps/api and infosound/apps/web'"
+  },
+  "peerDependencies": {
+    "react": "19.3.1"
+  }
+}

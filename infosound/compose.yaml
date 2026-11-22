@@ -1,0 +1,372 @@
+name: ${COMPOSE_PROJECT_NAME:-infosound}
+x-security: &security
+  init: true
+  restart: unless-stopped
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  pids_limit: 256
+  logging:
+    driver: json-file
+    options: {max-size: 10m, max-file: '3'}
+x-app: &app
+  <<: *security
+  read_only: true
+  user: '1000:1000'
+  tmpfs: ['/tmp:size=67108864,mode=1777']
+  stop_grace_period: 60s
+  environment: &app-env
+    NODE_ENV: production
+    COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-infosound}
+    LOCAL_DEPLOYMENT_MODE: ${LOCAL_DEPLOYMENT_MODE:-false}
+    APP_ORIGIN: ${APP_ORIGIN:-https://localhost:3443}
+    LOCAL_APP_ORIGIN: ${LOCAL_APP_ORIGIN:-}
+    LAN_APP_ORIGIN: ${LAN_APP_ORIGIN:-}
+    S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-https://localhost:9443}
+    S3_INTERNAL_ENDPOINT: http://storage:8333
+    REDIS_HOST: redis
+    REDIS_PORT: '6379'
+    REDIS_USERNAME: queue
+    REDIS_PASSWORD_FILE: /run/secrets/redis_password
+x-moderation-env: &moderation-env
+  MODERATION_AI_ENABLED: ${MODERATION_AI_ENABLED:-true}
+  MODERATION_AI_PROVIDER: ${MODERATION_AI_PROVIDER:-gemini}
+  GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash-lite}
+  MODERATION_AI_AUTO_APPROVE: ${MODERATION_AI_AUTO_APPROVE:-true}
+  MODERATION_AI_TIMEOUT_MS: ${MODERATION_AI_TIMEOUT_MS:-15000}
+  MODERATION_AI_MAX_RETRIES: ${MODERATION_AI_MAX_RETRIES:-2}
+  MODERATION_AI_CONCURRENCY: ${MODERATION_AI_CONCURRENCY:-1}
+  MODERATION_AI_MAX_OUTPUT_TOKENS: ${MODERATION_AI_MAX_OUTPUT_TOKENS:-1024}
+  MODERATION_AI_PENDING_MAX_AGE_SECONDS: ${MODERATION_AI_PENDING_MAX_AGE_SECONDS:-120}
+  MODERATION_AI_MAX_COMMENT_CHARS: ${MODERATION_AI_MAX_COMMENT_CHARS:-2000}
+  MODERATION_AI_MAX_CALLS_PER_MINUTE: ${MODERATION_AI_MAX_CALLS_PER_MINUTE:-2}
+  MODERATION_AI_DAILY_CALL_LIMIT: ${MODERATION_AI_DAILY_CALL_LIMIT:-200}
+  MODERATION_AI_LOG_CONTENT: ${MODERATION_AI_LOG_CONTENT:-false}
+  MODERATION_AI_AUDIT_RETENTION_DAYS: ${MODERATION_AI_AUDIT_RETENTION_DAYS:-30}
+services:
+  init-data:
+    profiles: [tools]
+    image: ${NODE_IMAGE:?Load images.env}
+    user: '0:0'
+    init: true
+    restart: 'no'
+    read_only: true
+    network_mode: none
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN]
+    pids_limit: 32
+    mem_limit: 64m
+    cpus: 0.25
+    environment:
+      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-infosound}
+      LOCAL_DEPLOYMENT_MODE: ${LOCAL_DEPLOYMENT_MODE:-false}
+    entrypoint: [node, /bootstrap/init-data.mjs]
+    volumes:
+      - ./scripts/init-data.mjs:/bootstrap/init-data.mjs:ro
+      - storage-data:/volumes/storage
+      - redis-data:/volumes/redis
+      - audio-tmp:/volumes/audio
+      - postgres-data:/volumes/postgres
+    logging:
+      driver: json-file
+      options: {max-size: 1m, max-file: '1'}
+  gateway:
+    <<: *security
+    image: infosound/gateway:local
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.gateway
+      args: {NGINX_IMAGE: '${NGINX_IMAGE:?Load images.env}'}
+    user: '101:101'
+    entrypoint: [nginx, -g, 'daemon off;']
+    read_only: true
+    tmpfs: ['/tmp:size=33554432,mode=1777']
+    mem_limit: 128m
+    cpus: 0.5
+    ports:
+      - '${APP_HOST:-127.0.0.1}:${APP_HTTP_PORT:-18080}:8080'
+      - '${APP_HOST:-127.0.0.1}:${APP_HTTPS_PORT:-3443}:8443'
+      - '${APP_HOST:-127.0.0.1}:${MEDIA_HTTPS_PORT:-9443}:9443'
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/proxy.conf:/etc/nginx/infosound-proxy.conf:ro
+    secrets: [server.crt, server.key]
+    networks: [ingress, app, media]
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1:8080/gateway-health]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+  web:
+    <<: *app
+    image: infosound/web:local
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      additional_contexts: {comment_moderation: ../comment-moderation}
+      args: {NODE_IMAGE: '${NODE_IMAGE:?Load images.env}'}
+    mem_limit: 768m
+    cpus: 1.0
+    environment: {NODE_ENV: production, PORT: '3000', HOSTNAME: '0.0.0.0', NEXT_TELEMETRY_DISABLED: '1'}
+    networks: [app]
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+  api:
+    <<: *app
+    image: infosound/api:local
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.server
+      additional_contexts: {comment_moderation: ../comment-moderation}
+      target: runtime
+      args: {NODE_IMAGE: '${NODE_IMAGE:?Load images.env}', APP: api}
+    mem_limit: 768m
+    cpus: 1.0
+    environment:
+      <<: [*app-env, *moderation-env]
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      PORT: '3001'
+      DATABASE_URL_FILE: /run/secrets/database_url_api
+      JWT_SECRET_FILE: /run/secrets/jwt_secret
+      OTP_SECRET_FILE: /run/secrets/otp_secret
+      MAIL_ENCRYPTION_KEY_FILE: /run/secrets/mail_encryption_key
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
+      OAUTH_CONFIG_FILE: /run/secrets/oauth_config
+      S3_UPLOAD_ACCESS_KEY_FILE: /run/secrets/s3_upload_access_key
+      S3_UPLOAD_SECRET_KEY_FILE: /run/secrets/s3_upload_secret_key
+      S3_READ_ACCESS_KEY_FILE: /run/secrets/s3_read_access_key
+      S3_READ_SECRET_KEY_FILE: /run/secrets/s3_read_secret_key
+      S3_API_ACCESS_KEY_FILE: /run/secrets/s3_api_access_key
+      S3_API_SECRET_KEY_FILE: /run/secrets/s3_api_secret_key
+    secrets: [database_url_api, jwt_secret, otp_secret, mail_encryption_key, redis_password, s3_upload_access_key, s3_upload_secret_key, s3_read_access_key, s3_read_secret_key, s3_api_access_key, s3_api_secret_key, oauth_config]
+    networks: [app, database, queue, media, outbound]
+    depends_on: {postgres: {condition: service_healthy}, storage: {condition: service_healthy}}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3001/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+  audio-worker:
+    <<: *app
+    image: infosound/audio-worker:local
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.server
+      additional_contexts: {comment_moderation: ../comment-moderation}
+      target: runtime
+      args: {NODE_IMAGE: '${NODE_IMAGE:?Load images.env}', APP: audio-worker}
+    mem_limit: 1536m
+    cpus: 1.5
+    volumes: [audio-tmp:/tmp/infosound-audio]
+    environment:
+      <<: *app-env
+      DATABASE_URL_FILE: /run/secrets/database_url_audio
+      S3_WORKER_ACCESS_KEY_FILE: /run/secrets/s3_worker_access_key
+      S3_WORKER_SECRET_KEY_FILE: /run/secrets/s3_worker_secret_key
+      CONVERT_LOSSY_TO_FLAC: ${CONVERT_LOSSY_TO_FLAC:-true}
+      WORKER_TMP_DIR: /tmp/infosound-audio
+    secrets: [database_url_audio, redis_password, s3_worker_access_key, s3_worker_secret_key]
+    networks: [database, queue, media]
+    depends_on: {postgres: {condition: service_healthy}, redis: {condition: service_healthy}, storage: {condition: service_healthy}}
+    healthcheck:
+      test: [CMD, node, -e, "process.exit(Date.now()-require('fs').statSync('/tmp/audio-worker-health').mtimeMs<60000?0:1)"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+  background-worker:
+    <<: *app
+    image: infosound/background-worker:local
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.server
+      additional_contexts: {comment_moderation: ../comment-moderation}
+      target: runtime
+      args: {NODE_IMAGE: '${NODE_IMAGE:?Load images.env}', APP: background-worker}
+    mem_limit: 384m
+    cpus: 0.5
+    environment:
+      <<: [*app-env, *moderation-env]
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      DATABASE_URL_FILE: /run/secrets/database_url_background
+      NODE_OPTIONS: --max-old-space-size=256
+      MAIL_ENCRYPTION_KEY_FILE: /run/secrets/mail_encryption_key
+      S3_CLEANER_ACCESS_KEY_FILE: /run/secrets/s3_cleaner_access_key
+      S3_CLEANER_SECRET_KEY_FILE: /run/secrets/s3_cleaner_secret_key
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
+      SMTP_CONFIG_FILE: /run/secrets/smtp_config
+    secrets: [database_url_background, redis_password, mail_encryption_key, s3_cleaner_access_key, s3_cleaner_secret_key, smtp_config]
+    networks: [database, queue, media, outbound]
+    depends_on: {postgres: {condition: service_healthy}}
+    healthcheck:
+      test: [CMD, node, -e, "process.exit(Date.now()-require('fs').statSync('/tmp/background-worker-health').mtimeMs<60000?0:1)"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+  postgres:
+    <<: *security
+    image: infosound/postgres:local
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.postgres
+      args: {POSTGRES_IMAGE: '${POSTGRES_IMAGE:?Load images.env}'}
+    user: '999:999'
+    mem_limit: 1536m
+    cpus: 1.5
+    shm_size: 256m
+    stop_grace_period: 60s
+    environment: {POSTGRES_USER: postgres, POSTGRES_DB: infosound, POSTGRES_PASSWORD_FILE: /run/secrets/db_bootstrap_password, PGDATA: /var/lib/postgresql/data/pgdata}
+    command: [postgres, -c, shared_buffers=256MB, -c, work_mem=4MB, -c, max_connections=60, -c, log_statement=none]
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infra/postgres/01-roles.sh:/docker-entrypoint-initdb.d/01-roles.sh:ro
+    secrets: [db_bootstrap_password, db_owner_password, db_api_password, db_audio_password, db_background_password]
+    networks: [database]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U postgres -d "$$POSTGRES_DB"']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  redis:
+    <<: *security
+    image: ${REDIS_IMAGE:?Load images.env}
+    user: '999:999'
+    mem_limit: 512m
+    cpus: 0.5
+    command: [redis-server, /usr/local/etc/redis/redis.conf]
+    volumes:
+      - redis-data:/data
+      - ./infra/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    secrets: [redis_password, redis.acl]
+    networks: [queue]
+    healthcheck:
+      test: [CMD-SHELL, 'REDISCLI_AUTH=$$(cat /run/secrets/redis_password) redis-cli --user queue ping | grep -q PONG']
+      interval: 10s
+      timeout: 5s
+      retries: 8
+  storage:
+    <<: *security
+    image: ${STORAGE_IMAGE:?Load images.env}
+    user: '1000:1000'
+    entrypoint: [weed]
+    mem_limit: 1024m
+    cpus: 1.0
+    command: [server, '-ip=storage', '-ip.bind=0.0.0.0', '-dir=/data', '-master.volumeSizeLimitMB=512', '-master.volumePreallocate=false', '-master.telemetry=false', '-volume.max=8', '-volume.minFreeSpace=2GiB', '-filer=true', '-filer.disableDirListing=true', '-s3=true', '-s3.port=8333', '-s3.config=/run/secrets/s3.json', '-s3.port.iceberg=0', '-s3.port.lance=0', '-s3.iam=false', '-s3.autoCreateBucket=false', '-s3.allowUntrustedRemoteEndpoints=false', '-s3.readerCacheSizeMB=64', '-s3.concurrentFileUploadLimit=2']
+    volumes:
+      - storage-data:/data
+      - ./infra/storage/filer.toml:/etc/seaweedfs/filer.toml:ro
+      - ./infra/storage/master.toml:/etc/seaweedfs/master.toml:ro
+    secrets: [s3.json]
+    networks: [media]
+    healthcheck:
+      test: [CMD-SHELL, 'curl -fsS http://127.0.0.1:9333/cluster/status >/dev/null && test -d /data/filerldb2 && test "$$(curl -sS -o /dev/null -w "%{http_code}" http://127.0.0.1:8333/)" = 403']
+      interval: 15s
+      timeout: 5s
+      retries: 10
+  tools:
+    <<: *app
+    profiles: [tools]
+    image: infosound/tools:local
+    restart: 'no'
+    build:
+      context: .
+      dockerfile: infra/Dockerfile.server
+      additional_contexts: {comment_moderation: ../comment-moderation}
+      target: tools
+      args: {NODE_IMAGE: '${NODE_IMAGE:?Load images.env}', APP: api}
+    mem_limit: 2048m
+    cpus: 1.5
+    working_dir: /repo/infosound
+    environment:
+      <<: [*app-env, *moderation-env]
+      DATABASE_URL_FILE: /run/secrets/database_url_owner
+      S3_BOOTSTRAP_ACCESS_KEY_FILE: /run/secrets/s3_bootstrap_access_key
+      S3_BOOTSTRAP_SECRET_KEY_FILE: /run/secrets/s3_bootstrap_secret_key
+    secrets: [database_url_owner, s3_bootstrap_access_key, s3_bootstrap_secret_key, ca.crt]
+    networks: [database, queue, media]
+    volumes:
+      - ./packages/database/prisma:/repo/infosound/packages/database/prisma:ro
+      - ./packages/database/grants.sql:/repo/infosound/packages/database/grants.sql:ro
+networks:
+  ingress: {}
+  app: {internal: true}
+  database: {internal: true}
+  queue: {internal: true}
+  media: {internal: true}
+  outbound: {}
+volumes:
+  postgres-data: {}
+  redis-data: {}
+  storage-data: {}
+  audio-tmp: {}
+secrets:
+  db_bootstrap_password:
+    file: ${SECRETS_DIR:-/etc/infosound}/db_bootstrap_password
+  db_owner_password:
+    file: ${SECRETS_DIR:-/etc/infosound}/db_owner_password
+  db_api_password:
+    file: ${SECRETS_DIR:-/etc/infosound}/db_api_password
+  db_audio_password:
+    file: ${SECRETS_DIR:-/etc/infosound}/db_audio_password
+  db_background_password:
+    file: ${SECRETS_DIR:-/etc/infosound}/db_background_password
+  database_url_owner:
+    file: ${SECRETS_DIR:-/etc/infosound}/database_url_owner
+  database_url_api:
+    file: ${SECRETS_DIR:-/etc/infosound}/database_url_api
+  database_url_audio:
+    file: ${SECRETS_DIR:-/etc/infosound}/database_url_audio
+  database_url_background:
+    file: ${SECRETS_DIR:-/etc/infosound}/database_url_background
+  redis_password:
+    file: ${SECRETS_DIR:-/etc/infosound}/redis_password
+  redis.acl:
+    file: ${SECRETS_DIR:-/etc/infosound}/redis.acl
+  jwt_secret:
+    file: ${SECRETS_DIR:-/etc/infosound}/jwt_secret
+  otp_secret:
+    file: ${SECRETS_DIR:-/etc/infosound}/otp_secret
+  mail_encryption_key:
+    file: ${SECRETS_DIR:-/etc/infosound}/mail_encryption_key
+  oauth_config:
+    file: ${SECRETS_DIR:-/etc/infosound}/oauth.json
+  smtp_config:
+    file: ${SECRETS_DIR:-/etc/infosound}/smtp.json
+  s3.json:
+    file: ${SECRETS_DIR:-/etc/infosound}/s3.json
+  server.crt:
+    file: ${SECRETS_DIR:-/etc/infosound}/server.crt
+  server.key:
+    file: ${SECRETS_DIR:-/etc/infosound}/server.key
+  ca.crt:
+    file: ${SECRETS_DIR:-/etc/infosound}/ca.crt
+  s3_bootstrap_access_key:
+    file: ${SECRETS_DIR:-/etc/infosound}/s3_bootstrap_access_key
+  s3_bootstrap_secret_key:
+    file: ${SECRETS_DIR:-/etc/infosound}/s3_bootstrap_secret_key
+  s3_upload_access_key:
+    file: ${SECRETS_DIR:-/etc/infosound}/s3_upload_access_key
+  s3_upload_secret_key:
+    file: ${SECRETS_DIR:-/etc/infosound}/s3_upload_secret_key
+  s3_read_access_key:
+    file: ${SECRETS_DIR:-/etc/infosound}/s3_read_access_key
+  s3_read_secret_key:
+    file: ${SECRETS_DIR:-/etc/infosound}/s3_read_secret_key
+  s3_api_access_key:
+    file: ${SECRETS_DIR:-/etc/infosound}/s3_api_access_key
+  s3_api_secret_key:
+    file: ${SECRETS_DIR:-/etc/infosound}/s3_api_secret_key
+  s3_worker_access_key:
+    file: ${SECRETS_DIR:-/etc/infosound}/s3_worker_access_key
+  s3_worker_secret_key:
+    file: ${SECRETS_DIR:-/etc/infosound}/s3_worker_secret_key
+  s3_cleaner_access_key:
+    file: ${SECRETS_DIR:-/etc/infosound}/s3_cleaner_access_key
+  s3_cleaner_secret_key:
+    file: ${SECRETS_DIR:-/etc/infosound}/s3_cleaner_secret_key
+  s3_backup_access_key:
+    file: ${SECRETS_DIR:-/etc/infosound}/s3_backup_access_key
+  s3_backup_secret_key:
+    file: ${SECRETS_DIR:-/etc/infosound}/s3_backup_secret_key

@@ -1,0 +1,58 @@
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+GRANT USAGE ON SCHEMA public TO infosound_api, infosound_audio, infosound_background;
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM infosound_api, infosound_audio, infosound_background;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM infosound_api, infosound_audio, infosound_background;
+
+GRANT SELECT,INSERT,UPDATE,DELETE ON pending_registrations,users,avatar_uploads,auth_sessions,password_reset_requests,external_identities,oauth_flows,tracks,upload_sessions,track_assets,processing_tasks,outbox_events,track_likes,artist_follows,playlists,playlist_tracks,release_events,notifications TO infosound_api;
+GRANT SELECT,INSERT ON genres TO infosound_api;
+GRANT SELECT,INSERT,DELETE ON track_genres TO infosound_api;
+GRANT SELECT,INSERT,UPDATE,DELETE ON track_lyrics TO infosound_api;
+GRANT SELECT,INSERT,UPDATE,DELETE ON track_listens TO infosound_api;
+GRANT SELECT,INSERT,UPDATE,DELETE ON visitor_track_listens TO infosound_api;
+GRANT SELECT,INSERT,UPDATE,DELETE ON music_preferences TO infosound_api;
+GRANT SELECT,INSERT,DELETE ON track_comments,track_comment_likes TO infosound_api;
+GRANT UPDATE ON track_comments TO infosound_api,infosound_background;
+GRANT SELECT ON track_comments TO infosound_background;
+GRANT EXECUTE ON FUNCTION infosound_check_comment_parent() TO infosound_background;
+GRANT SELECT ON comment_moderation_permissions TO infosound_api;
+GRANT SELECT,INSERT,UPDATE,DELETE ON comment_moderation_jobs,comment_moderation_audit,comment_moderation_reviews TO infosound_api,infosound_background;
+GRANT SELECT,INSERT,UPDATE,DELETE ON comment_moderation_notifications TO infosound_api;
+GRANT SELECT,INSERT,UPDATE ON comment_moderation_notifications TO infosound_background;
+GRANT SELECT,INSERT,UPDATE ON comment_moderation_rate TO infosound_api;
+GRANT SELECT,INSERT,UPDATE ON comment_moderation_budget TO infosound_api,infosound_background;
+GRANT SELECT (id,active,role) ON users TO infosound_background;
+GRANT SELECT ON track_waveforms TO infosound_api;
+GRANT EXECUTE ON FUNCTION infosound_check_comment_parent() TO infosound_api;
+GRANT SELECT,INSERT,UPDATE ON track_waveforms TO infosound_audio,infosound_background;
+GRANT EXECUTE ON FUNCTION infosound_valid_waveform_peaks(JSONB) TO infosound_audio,infosound_background;
+GRANT EXECUTE ON FUNCTION infosound_valid_lyrics_lines(JSONB) TO infosound_api;
+REVOKE ALL ON FUNCTION infosound_search_normalize(TEXT),infosound_lyrics_search_text(JSONB) FROM PUBLIC,infosound_audio,infosound_background;
+GRANT EXECUTE ON FUNCTION infosound_search_normalize(TEXT),infosound_lyrics_search_text(JSONB) TO infosound_api;
+GRANT EXECUTE ON FUNCTION infosound_genre_alias_key(TEXT),infosound_known_genre_ids(TEXT),infosound_resolve_legacy_genre(TEXT) TO infosound_api;
+
+GRANT SELECT ON tracks,processing_tasks,track_assets TO infosound_audio;
+GRANT UPDATE ON processing_tasks TO infosound_audio;
+GRANT UPDATE (processing_state,duration,sample_rate,bit_depth,channels,source_codec,output_codec,lossy_transcode,provenance,playback_asset_id,updated_at) ON tracks TO infosound_audio;
+GRANT INSERT,UPDATE ON track_assets TO infosound_audio;
+
+GRANT SELECT,UPDATE ON processing_tasks,outbox_events TO infosound_background;
+GRANT SELECT ON tracks,artist_follows,release_events,upload_sessions,track_assets TO infosound_background;
+GRANT SELECT (id,avatar_key,avatar_version_id) ON users TO infosound_background;
+GRANT SELECT (id,user_id,object_key,completed_at,expires_at) ON avatar_uploads TO infosound_background;
+GRANT DELETE ON avatar_uploads TO infosound_background;
+GRANT UPDATE (processing_state,updated_at) ON tracks TO infosound_background;
+GRANT SELECT,INSERT ON notifications TO infosound_background;
+GRANT SELECT,DELETE ON pending_registrations,password_reset_requests,auth_sessions TO infosound_background;
+GRANT SELECT,DELETE ON oauth_flows TO infosound_background;
+GRANT SELECT (id,expires_at) ON email_otp_challenges TO infosound_background;
+GRANT DELETE ON email_otp_challenges TO infosound_background;
+GRANT SELECT,INSERT,UPDATE,DELETE ON email_otp_challenges TO infosound_api;
+GRANT SELECT,INSERT,UPDATE,DELETE ON chat_conversations,chat_messages TO infosound_api;
+GRANT DELETE ON outbox_events TO infosound_background;
+
+REVOKE ALL ON FUNCTION infosound_check_ready_asset() FROM PUBLIC;
+REVOKE ALL ON FUNCTION infosound_unaccent(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION infosound_unaccent(text) TO infosound_api,infosound_audio,infosound_background;
+GRANT EXECUTE ON FUNCTION infosound_check_ready_asset() TO infosound_api,infosound_audio,infosound_background;
+GRANT EXECUTE ON FUNCTION infosound_prepare_deleted_track_cleanup(UUID,TIMESTAMPTZ) TO infosound_background;
+REVOKE CREATE ON SCHEMA public FROM infosound_api,infosound_audio,infosound_background;

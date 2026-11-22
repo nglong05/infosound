@@ -1,0 +1,29 @@
+/* Theme controls share the header preference popover pattern and semantic tokens. */
+.topbar-actions{position:relative}
+.topbar-actions>.language-selector{position:static}
+.theme-selector{position:relative;display:flex;align-items:center;flex-shrink:0;min-height:44px;direction:ltr}
+.theme-trigger{display:grid;place-items:center;width:44px;min-width:44px;height:44px;min-height:44px;padding:0;border:1px solid var(--control-border);border-radius:50%;color:var(--text);background:var(--panel);cursor:pointer}
+.theme-trigger:hover,.theme-trigger[aria-expanded=true]{background:var(--elevated);border-color:var(--accent)}
+.topbar:has(.theme-selector[data-open=true]){z-index:90}
+.theme-dialog{position:absolute;z-index:1;top:calc(100% + 10px);right:0;display:flex;flex-direction:column;width:min(340px,calc(100vw - 32px));max-height:min(480px,var(--theme-available-height));padding:16px;border:1px solid var(--control-border);border-radius:18px;box-shadow:0 18px 60px var(--overlay-shadow,var(--bg));background:var(--panel);color:var(--text);overflow:hidden;text-align:start;direction:ltr;white-space:normal}
+.theme-dialog-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}
+.theme-dialog-heading h2{min-width:0;font-size:18px;line-height:1.4;letter-spacing:normal;overflow-wrap:anywhere}
+.theme-dialog .icon-button{color:var(--text);min-width:44px;min-height:44px;flex-shrink:0}
+.theme-description{font-size:13px;line-height:1.6;margin:4px 0 14px;color:var(--muted);flex-shrink:0}
+.theme-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;min-height:0;overflow-y:auto;overscroll-behavior:contain;scroll-padding-block:4px;padding:4px}
+.theme-option{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:8px;min-width:0;min-height:84px;padding:10px 6px;border:1px solid var(--control-border);border-radius:12px;cursor:pointer;text-align:center}
+.theme-option:hover{background:var(--elevated)}
+.theme-option[data-selected=true]{border-color:var(--accent);background:var(--accent-soft)}
+.theme-option input{position:absolute;z-index:1;inset:0;width:100%;height:100%;min-height:0;margin:0;padding:0;border:0;opacity:0;cursor:pointer}
+.theme-option:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:1px}
+.theme-swatch{width:28px;height:28px;flex-shrink:0;display:grid;place-items:center;border-radius:50%;background:var(--theme-preview);color:var(--ink);border:1px solid var(--control-border)}
+.theme-name{font-size:12px;line-height:1.5;overflow-wrap:anywhere;max-width:100%;font-weight:550}
+.theme-dialog button:focus-visible{outline-offset:-3px}
+html[dir=rtl] .theme-dialog{direction:rtl}
+@media(max-width:767px){.theme-dialog{padding:12px;max-height:min(440px,var(--theme-available-height))}}
+@media(max-width:479px){.theme-dialog{width:calc(100vw - 32px)}}
+@media(max-height:500px){.theme-dialog{padding:8px 12px}.theme-description{margin:0 0 8px}.theme-option{min-height:72px;padding:8px 6px;gap:5px}}
+
+/* Wrapped preference/account rows change the real sticky header height. */
+.mobile-nav{top:var(--topbar-height,var(--header))}
+@media(max-width:1023px){html{scroll-padding-top:calc(var(--topbar-height,var(--header)) + 78px)}}

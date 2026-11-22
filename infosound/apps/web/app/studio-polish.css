@@ -1,0 +1,64 @@
+/* Studio groups related work into two calm panels; disclosures keep drafts mounted. */
+.studio-page{min-width:0}
+.studio-page .page-heading{margin-bottom:28px}
+.studio-page .studio-guide{gap:12px;padding-bottom:22px;margin-bottom:28px;border-color:var(--line);font-size:12px}
+.studio-page .studio-list{border-top:0}
+.studio-page .studio-row{padding:16px 14px;border-bottom-color:var(--line);border-radius:14px;gap:18px}
+.studio-page .studio-row:hover{background:var(--panel)}
+.studio-page .studio-thumb{width:64px}
+.studio-page .studio-thumb .artwork{border-radius:12px}
+.studio-page .studio-track-title h3{font-size:15px;font-weight:650}
+.studio-page .studio-status{padding:0 0 24px;margin-bottom:28px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;box-shadow:none}
+.studio-page .studio-status p{font-size:13px;line-height:1.7;margin-top:12px}
+.studio-page .studio-status .action-row{flex-wrap:wrap}
+.studio-editor-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(260px,1fr);gap:24px;align-items:start}
+.studio-editor-main,.studio-media-panel{min-width:0;border-radius:22px}
+.studio-metadata-form h2{font-size:23px;font-weight:650;letter-spacing:-.02em}
+.studio-media-panel>.artwork{width:100%;max-width:320px;margin:0 auto 18px;border-radius:16px}
+.studio-disclosure{min-width:0;border-top:1px solid var(--line)}
+.studio-disclosure>summary{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:58px;padding:14px 0;font-size:14px;font-weight:600;color:var(--text-soft);cursor:pointer;list-style:none}
+.studio-disclosure>summary::-webkit-details-marker{display:none}
+.studio-disclosure>summary span{min-width:0;overflow-wrap:anywhere}
+.studio-disclosure>summary>svg{flex-shrink:0;color:var(--muted);transition:transform 160ms ease}
+.studio-disclosure[open]>summary{color:var(--text)}
+.studio-disclosure[open]>summary>svg{transform:rotate(180deg)}
+.studio-disclosure>.form-stack,.studio-disclosure-body{padding:4px 0 22px}
+.studio-disclosure>.form-stack{gap:18px}
+.studio-disclosure>.form-stack p,.studio-disclosure-body p{font-size:13px;line-height:1.7}
+.studio-disclosure>.form-stack input[type=file]{min-width:0;max-width:100%;font-size:13px}
+.studio-disclosure .technical{margin-top:0}
+.studio-lyrics-disclosure{margin-top:28px}
+.studio-lyrics-disclosure>.lyrics-editor{padding:6px 0 0;margin:0;border:0;border-radius:0;background:transparent;box-shadow:none}
+.studio-lyrics-disclosure .lyrics-editor-heading h2{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.studio-lyrics-disclosure .lyrics-editor-heading{margin-bottom:20px}
+.studio-lyrics-disclosure .lyrics-editor-heading p{margin-top:0}
+.studio-delete-footer{display:flex;justify-content:flex-end;padding-top:14px;border-top:1px solid var(--line)}
+.studio-delete-trigger{min-height:44px!important;padding:10px 16px!important;border:1px solid var(--danger-border)!important;border-radius:999px!important;background:transparent!important;color:var(--danger-text)!important;font-size:13px!important;font-weight:600}
+.studio-delete-trigger:hover:not(:disabled){background:var(--danger-surface)!important}
+.studio-delete-trigger:disabled{opacity:.45;cursor:not-allowed}
+.studio-page>.upload-progress{margin-bottom:24px}
+.studio-create-page .upload-rules{padding:8px 4px;border:0;border-radius:0;background:transparent}
+.studio-create-page .upload-rules h3{font-size:15px;font-weight:600}
+.studio-create-page .upload-rules p{font-size:13px;line-height:1.8}
+.studio-create-page .file-drop{padding:36px 24px;border-radius:18px;background:var(--bg)}
+.studio-delete-dialog{position:fixed;inset:0;width:480px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);margin:auto;padding:30px;overflow:auto;border:1px solid var(--danger-border);border-radius:22px;background:var(--panel);color:var(--text);box-shadow:0 24px 80px color-mix(in srgb,var(--bg) 80%,transparent);text-align:start;white-space:normal}
+.studio-delete-dialog:not([open]){display:none}
+.studio-delete-dialog::backdrop{background:color-mix(in srgb,var(--bg) 78%,transparent)}
+.studio-delete-dialog h2{font-size:24px;font-weight:650;line-height:1.35;letter-spacing:-.02em;color:var(--danger-text);overflow-wrap:anywhere}
+.studio-delete-track{margin:18px 0 12px;font-size:16px;font-weight:650;overflow-wrap:anywhere}
+.studio-delete-dialog>.muted{font-size:14px;line-height:1.75}
+.studio-delete-dialog .form-error{margin-top:18px;font-size:14px}
+.studio-delete-dialog .action-row{justify-content:flex-end;margin-top:26px;gap:12px;flex-wrap:wrap}
+.studio-delete-dialog .button{min-height:44px}
+@media(max-width:1199px){.studio-editor-layout{grid-template-columns:minmax(0,1.4fr) minmax(250px,1fr);gap:20px}.studio-editor-main,.studio-media-panel{padding:24px}}
+@media(max-width:899px){.studio-editor-layout{grid-template-columns:minmax(0,1fr)}.studio-media-panel>.artwork{max-width:260px}.studio-page .studio-status .action-row{max-width:100%;justify-content:flex-start}.studio-media-panel .studio-disclosure{width:100%}}
+@media(max-width:599px){.studio-editor-main,.studio-media-panel{padding:22px 20px;border-radius:18px}.studio-page .studio-guide{gap:8px;font-size:11px}.studio-page .studio-row{padding:14px 6px;gap:12px}.studio-page .studio-thumb{width:52px}.studio-page .studio-track-title h3{font-size:14px}.studio-page .studio-status{margin-bottom:24px;padding-bottom:20px}.studio-disclosure>summary{min-height:56px;font-size:14px}.studio-delete-dialog{padding:24px 20px;border-radius:18px}.studio-delete-dialog h2{font-size:22px}.studio-delete-dialog .action-row .button{flex:1;justify-content:center}.studio-create-page .upload-rules{padding:0 2px}.studio-create-page .file-drop{padding:28px 16px}}
+@media(prefers-reduced-motion:reduce){.studio-disclosure>summary>svg{transition:none}}
+/* The actual file control fills the label, retaining native click/keyboard/validation. */
+.studio-create-page .studio-audio-picker{position:relative;display:flex;justify-content:center;min-height:176px;padding:32px 24px;isolation:isolate}
+.studio-create-page .studio-audio-picker strong{font-size:clamp(20px,2.5vw,25px);line-height:1.4;font-weight:600;pointer-events:none}
+.studio-create-page .studio-audio-picker input[type=file]{position:absolute;inset:0;width:100%;height:100%;min-height:100%!important;max-width:none;margin:0!important;padding:0!important;opacity:0;cursor:pointer}
+.studio-create-page .studio-audio-picker:focus-within{outline:3px solid var(--focus);outline-offset:4px}
+.studio-create-page .studio-audio-picker:has(input:disabled){cursor:default;opacity:.65}
+.studio-create-page .studio-audio-picker input:disabled{cursor:default}
+@media(max-width:599px){.studio-create-page .studio-audio-picker{min-height:150px;padding:28px 20px}}

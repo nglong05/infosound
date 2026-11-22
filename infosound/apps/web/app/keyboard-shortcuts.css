@@ -1,0 +1,22 @@
+/* The native top-layer dialog keeps the root audio and lyrics view mounted. */
+.keyboard-shortcuts-trigger{display:grid;place-items:center;flex-shrink:0;width:44px;min-width:44px;height:44px;min-height:44px;padding:0;border:1px solid var(--control-border);border-radius:50%;color:var(--text);background:var(--panel);cursor:pointer}
+.keyboard-shortcuts-trigger:hover,.keyboard-shortcuts-trigger[aria-expanded=true]{border-color:var(--accent);background:var(--elevated)}
+.keyboard-shortcuts-dialog{position:fixed;inset:0;width:850px;max-width:calc(100vw - 40px);height:fit-content;max-height:calc(100dvh - 40px);margin:auto;padding:0;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--text);box-shadow:0 28px 100px color-mix(in srgb,var(--bg) 90%,transparent);white-space:normal;text-align:start}
+.keyboard-shortcuts-dialog::backdrop{background:color-mix(in srgb,var(--bg) 76%,transparent);backdrop-filter:blur(4px)}
+.keyboard-shortcuts-dialog[open]{display:flex;flex-direction:column}.keyboard-shortcuts-dialog:not([open]){display:none}
+.keyboard-shortcuts-heading{display:flex;flex-shrink:0;align-items:center;justify-content:space-between;gap:20px;padding:24px 28px 16px;background:var(--bg)}
+.keyboard-shortcuts-heading h2{min-width:0;font-size:25px;line-height:1.35;letter-spacing:-.02em;overflow-wrap:anywhere}
+.keyboard-shortcuts-heading h2:focus-visible{outline:2px solid var(--focus);outline-offset:4px;border-radius:2px}
+.keyboard-shortcuts-close{color:var(--text);align-self:flex-start}
+.keyboard-shortcuts-body{min-width:0;min-height:0;padding:4px 28px 28px;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;scroll-padding-block:16px}
+.keyboard-shortcuts-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;column-gap:40px;row-gap:24px}
+.keyboard-shortcut-group{display:flex;flex-direction:column;gap:12px;min-width:0;margin:0;padding:0}
+.keyboard-shortcut-row{display:grid;grid-template-columns:130px minmax(0,1fr);align-items:center;gap:12px;min-width:0;min-height:32px;font-size:13px;line-height:1.5}
+.keyboard-shortcut-keys{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:5px;min-width:0}
+.keyboard-shortcut-keys kbd{display:inline-flex;align-items:center;justify-content:center;min-width:28px;min-height:28px;max-width:100%;padding:3px 8px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;background:var(--elevated);color:var(--text);font-family:inherit;font-size:12px;font-weight:500;line-height:1.4;overflow-wrap:anywhere;text-align:center}
+.keyboard-shortcut-separator{color:var(--muted);font-size:11px}.keyboard-shortcut-separator.is-sequence{font-size:12px}
+.keyboard-shortcut-row dd{min-width:0;margin:0;overflow-wrap:anywhere}
+.keyboard-shortcuts-note{margin-top:28px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;line-height:1.6;color:var(--muted)}
+.keyboard-shortcuts-option{display:flex;align-items:flex-start;gap:10px;margin-top:12px;font-size:13px;line-height:1.5;cursor:pointer}.keyboard-shortcuts-option input{width:18px;height:18px;flex-shrink:0;accent-color:var(--accent)}.keyboard-shortcuts-option small{display:block;color:var(--muted);font-size:12px}
+@media(max-width:699px){.keyboard-shortcuts-dialog{max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}.keyboard-shortcuts-heading{padding:18px 18px 12px;gap:12px}.keyboard-shortcuts-heading h2{font-size:22px}.keyboard-shortcuts-body{padding:4px 18px 20px}.keyboard-shortcuts-grid{grid-template-columns:minmax(0,1fr);row-gap:24px}.keyboard-shortcut-row{grid-template-columns:124px minmax(0,1fr);gap:10px}.keyboard-shortcut-group{gap:10px}.keyboard-shortcuts-note{margin-top:20px}}
+@media(max-height:540px){.keyboard-shortcuts-dialog{max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px)}.keyboard-shortcuts-heading{padding:10px 18px 6px}.keyboard-shortcuts-heading h2{font-size:21px}.keyboard-shortcuts-body{padding:4px 18px 16px}.keyboard-shortcut-group{gap:8px}.keyboard-shortcuts-note{margin-top:18px}}

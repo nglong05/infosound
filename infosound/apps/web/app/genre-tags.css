@@ -1,0 +1,14 @@
+/* Passive genre values use the active palette; they do not imply a filter action. */
+.genre-tags{display:inline-flex;align-items:center;flex-wrap:wrap;gap:6px;min-width:0;max-width:100%;vertical-align:middle;white-space:normal}
+.genre-tag{display:inline-flex;align-items:center;min-width:0;max-width:100%;padding:3px 8px;border:1px solid var(--line);border-radius:999px;background:var(--accent-soft);color:var(--text-soft);font-size:12px;line-height:1.5;font-weight:500;letter-spacing:normal}
+.genre-tag bdi{min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere}
+.genre-tags-empty{min-width:0;overflow-wrap:anywhere}
+.card-meta{align-items:flex-start}
+.card-meta>.genre-tags,.card-meta>.genre-tags-empty{flex:1 1 0;min-width:0;white-space:normal}
+.card-meta>span:last-child{flex-shrink:0}
+.track-genre-heading{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-block-end:12px;min-width:0}
+.track-genre-heading .genre-tags{flex:0 1 auto}
+@media(max-width:767px){.genre-tags{gap:4px}.genre-tag{padding:2px 6px}.track-genre-heading{gap:6px}}
+
+.studio-genre-summary{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;min-width:0}
+.studio-genre-summary>.genre-tags{max-width:100%}

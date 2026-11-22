@@ -1,0 +1,4 @@
+/* Search metadata: show why a song matched without exposing lyric content. */
+.search-lyric-match{display:flex;align-items:flex-start;gap:6px;min-width:0;margin:10px 0 0;color:var(--accent-hover);font-size:12px;line-height:1.5;font-weight:600}
+.search-lyric-match svg{flex:0 0 14px;margin-top:2px}
+.search-lyric-match span{min-width:0;overflow-wrap:anywhere}
